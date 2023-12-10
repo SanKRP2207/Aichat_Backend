@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/User.js";
+// import createtoken from "../utils/tokan-manager.js";
+// import COOKIE_NAME from "../utils/constant.js";
 
 export const getAllUsers = async (
     req: Request,
@@ -20,6 +22,8 @@ export const getAllUsers = async (
 
 
 import { compare, hash } from "bcrypt";
+import { COOKIE_NAME } from "../utils/constant.js";
+import { createtoken } from "../utils/token-manager.js";
 
 export const userSignup = async (
     req: Request,
@@ -34,6 +38,28 @@ export const userSignup = async (
         const hashedPassword = await hash(password, 10);
         const user = new User({ name, email, password: hashedPassword });
         await user.save();
+
+        // creating token and cookies
+
+        res.clearCookie(COOKIE_NAME, {
+            domain: "localhost",
+            httpOnly: true,
+            signed: true,
+            path: "/",
+        });
+
+        const token = createtoken(user._id.toString(), user.email, "7d");
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie("auth_token", token, {
+            path: "/",
+            domain: "localhost",
+            expires,
+            httpOnly: true,
+            signed: true,
+        });
+
+
         return res.status(201).json({ message: "Ok", id: user._id.toString() });
     } catch (error) {
         console.error(error);
@@ -49,7 +75,7 @@ export const userLogin = async (
     next: NextFunction
 ) => {
     try {
-        // user signup
+        // user login
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user) {
@@ -59,6 +85,29 @@ export const userLogin = async (
         if (!isPasswordCurrect) {
             return res.status(403).send("Incorrect Password");
         }
+
+
+        // creating token and cookies
+        res.clearCookie(COOKIE_NAME, {
+            domain: "localhost",
+            httpOnly: true,
+            signed: true,
+            path: "/",
+        });
+
+        const token = createtoken(user._id.toString(), user.email, "7d");
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 7);
+        res.cookie("auth_token", token, {
+            path: "/",
+            domain: "localhost",
+            expires,
+            httpOnly: true,
+            signed: true,
+        });
+
+
+
         return res.status(200).json({ message: "Ok", id: user._id.toString() });
     } catch (error) {
         console.error(error);

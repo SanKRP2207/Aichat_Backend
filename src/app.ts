@@ -3,12 +3,15 @@ import express, { Express, Request, Response , Application } from 'express';
 import morgan from "morgan";
 import dotenv from 'dotenv';
 import appRouter from './routes/index.js';
+import cookieParser from 'cookie-parser';
+// import { cookieParser } from "cookie-parser";
 
 //For env File 
 dotenv.config();
 
 const app: Application = express();
 app.use(express.json());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 //Morgan is another HTTP request logger middleware for Node. js.
 // It simplifies the process of logging requests to your application.
