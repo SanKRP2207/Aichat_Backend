@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { COOKIE_NAME } from "./constant.js";
 const key = process.env.JWT_SECRET || "defaut key";
 export const createtoken = (id, email, expiresIn) => {
     const payload = { id, email };
@@ -6,4 +7,24 @@ export const createtoken = (id, email, expiresIn) => {
         expiresIn,
     });
     return token;
+};
+export const verfyToken = async (req, res, next) => {
+    const token = req.signedCookies[`${COOKIE_NAME}`];
+    if (!token || token.trim() === "") {
+        return res.status(401).json({ message: "token not received" });
+    }
+    return new Promise((resolve, reject) => {
+        return jwt.verify(token, key, (err, success) => {
+            if (err) {
+                reject(err.message);
+                return res.status(401).json({ message: "Token Expired" });
+            }
+            else {
+                console.log("Token verification successful");
+                resolve();
+                res.locals.jwtData = success;
+                return next();
+            }
+        });
+    });
 };
